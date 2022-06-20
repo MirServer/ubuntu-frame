@@ -13,4 +13,12 @@ then
   unset WAYLAND_DISPLAY
 fi
 
+# Use hack in snapd for proprietary nVidia drivers mounts the drivers in
+# /var/lib/snapd/lib/gl that needs to be in LD_LIBRARY_PATH
+# Without that OpenGL using apps do not work with the nVidia drivers
+if [ -d /var/lib/snapd/lib/glvnd/egl_vendor.d ]; then
+  __EGL_VENDOR_LIBRARY_DIRS=/var/lib/snapd/lib/glvnd/egl_vendor.d:${__EGL_VENDOR_LIBRARY_DIRS}
+  LD_LIBRARY_PATH=/var/lib/snapd/lib/gl:/var/lib/snapd/lib/gl/vdpau:${LD_LIBRARY_PATH}
+fi
+
 exec "$@"

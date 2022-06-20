@@ -25,6 +25,7 @@ environment:
   LD_LIBRARY_PATH:    $SNAP/graphics/lib
   LIBGL_DRIVERS_PATH: $SNAP/graphics/dri
   __EGL_VENDOR_LIBRARY_DIRS: $SNAP/graphics/glvnd/egl_vendor.d
+  __EGL_EXTERNAL_PLATFORM_CONFIG_DIRS: $SNAP/usr/share/egl/egl_external_platform.d
   # Setup XKB
   XKB_CONFIG_ROOT: $SNAP/usr/share/X11/xkb
 
@@ -114,9 +115,11 @@ parts:
     stage-packages:
       - mir-platform-graphics-gbm-kms
       - mir-platform-graphics-x
+      - mir-platform-graphics-eglstream-kms
     prime:
       - usr/lib/${SNAPCRAFT_ARCH_TRIPLET}
       - usr/share/libinput
+      - usr/share/egl
 
   icons:
     plugin: nil
