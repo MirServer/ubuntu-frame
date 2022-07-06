@@ -6,9 +6,6 @@ confinement: strict
 base: core20
 license: GPL-3.0
 compression: lzo
-package-repositories:
-  - type: apt
-    ppa: mir-team/release
 
 architectures:
   - build-on: amd64
@@ -89,11 +86,20 @@ parts:
     prime:
       - -recipe-version
 
+  mir:
+    plugin: nil
+    stage-snaps:
+      - mir-core20
+    prime:
+      - -*.h
+      - -*.pc
+      - -share
+
   ubuntu-frame:
-    after: [recipe-version]
+    after: [recipe-version, mir]
     override-pull: |
       snapcraftctl pull
-      mir_version=`LANG=C apt-cache policy mir-graphics-drivers-desktop | sed -rne 's/^\s+Candidate:\s+([^-]*)-.+$/\1/p'`
+      mir_version=$( sed -rne 's/^version:\s+([^-]*)-.+$/\1/p' ${SNAPCRAFT_STAGE}/meta.mir-core20/snap.yaml )
       recipe_version=`cat $SNAPCRAFT_STAGE/recipe-version`
       snapcraftctl set-version $recipe_version-mir$mir_version
       if echo $mir_version | grep -e '+dev' -e '~rc' -q; then snapcraftctl set-grade devel; else snapcraftctl set-grade stable; fi
@@ -101,22 +107,18 @@ parts:
     source: src
     build-packages:
       - pkg-config
-      - libmiral-dev
       - libwayland-dev
       - libboost1.71-dev
       - libapparmor-dev
+      - libxkbcommon-dev
     stage-packages:
-      - libmiral4
       - libapparmor1
-
-  platform:
-    plugin: nil
-    stage-packages:
-      - mir-platform-graphics-gbm-kms
-      - mir-platform-graphics-x
-    prime:
-      - usr/lib/${SNAPCRAFT_ARCH_TRIPLET}
-      - usr/share/libinput
+      - libxkbcommon0
+    build-environment:
+    - LD_LIBRARY_PATH: ${SNAPCRAFT_STAGE}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}
+    override-build: |
+      sed -i 's@/root/stage/root/stage@/root/stage@' ${SNAPCRAFT_STAGE}/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}/pkgconfig/*.pc
+      snapcraftctl build
 
   icons:
     plugin: nil
@@ -135,7 +137,7 @@ parts:
     stage-packages: [grim]
 
   cleanup:
-    after: [ubuntu-frame, platform, icons, scripts]
+    after: [ubuntu-frame, icons, scripts]
     plugin: nil
     build-snaps: [ mesa-core20 ]
     override-prime: |
